@@ -1,0 +1,23 @@
+# เก็บเฉพาะโค้ดระบบใน git (เอกสาร วิดีโอ รายงาน อยู่ในเครื่องเท่านั้น)
+/*
+!/public/
+!/includes/
+!/assets/
+!/sql/
+!/migrations/
+!/docker/
+!/config.php
+!/Dockerfile
+!/.dockerignore
+!/.gitignore
+!/.env.example
+!/README.md
+!/CLAUDE.md
+!/scripts/
+/scripts/*
+!/scripts/create_user.php
+
+/public/pic/
+/public/icon/
+.env
+.DS_Store

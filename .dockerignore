@@ -1,0 +1,6 @@
+*
+!config.php
+!includes/
+!assets/
+!public/
+!docker/
