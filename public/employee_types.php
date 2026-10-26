@@ -8,6 +8,14 @@ require_once __DIR__ . '/../includes/functions.php';
 
 requireLogin();
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    checkCsrf();
+    deleteMasterRecord('employee_type', (int) ($_POST['id'] ?? 0));
+
+    header('Location: employee_types.php' . (($_SERVER['QUERY_STRING'] ?? '') !== '' ? '?' . $_SERVER['QUERY_STRING'] : ''));
+    exit;
+}
+
 $search = trim($_GET['search'] ?? '');
 $statusFilter = $_GET['status'] ?? 'all';
 
@@ -94,6 +102,7 @@ require_once __DIR__ . '/../includes/header.php';
             <td><?= activeBadge((bool) $employeeType['is_active']) ?></td>
             <td>
                 <a href="employee_type_form.php?id=<?= (int) $employeeType['employee_type_id'] ?>"><i class="bi bi-pencil-square"></i> แก้ไข</a>
+                <?php renderDeleteButton((int) $employeeType['employee_type_id'], (string) $employeeType['employee_type_name']); ?>
             </td>
         </tr>
         <?php endforeach; ?>

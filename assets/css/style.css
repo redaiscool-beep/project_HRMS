@@ -1087,3 +1087,34 @@ legend {
         background: #fff;
     }
 }
+
+/* ===== Delete / Back / Clear ===== */
+
+.inline-form {
+    display: inline;
+    margin-left: 10px;
+}
+
+.link-danger {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--red-700);
+    cursor: pointer;
+    font: inherit;
+}
+
+.link-danger:hover {
+    text-decoration: underline;
+}
+
+.page-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.page-nav .breadcrumb {
+    margin-bottom: 0;
+}

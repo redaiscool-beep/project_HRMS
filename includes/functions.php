@@ -159,3 +159,121 @@ function renderPagination(array $pagination): void
     </div>
     <?php
 }
+
+function setFlash(string $type, string $message): void
+{
+    $_SESSION['flash'] = ['type' => $type, 'message' => $message];
+}
+
+function renderFlash(): void
+{
+    if (empty($_SESSION['flash'])) {
+        return;
+    }
+
+    $flash = $_SESSION['flash'];
+    unset($_SESSION['flash']);
+    $class = $flash['type'] === 'success' ? 'alert-success' : 'alert-error';
+    ?>
+    <div class="alert <?= $class ?>"><?= e($flash['message']) ?></div>
+    <?php
+}
+
+/**
+ * Master Data ที่ลบได้ พร้อมรายการ table/column ที่อ้างอิงถึง
+ * ชื่อ table/column มาจาก whitelist นี้เท่านั้น ไม่รับจาก user input
+ */
+function masterDeleteConfig(): array
+{
+    return [
+        'department' => [
+            'table' => 'hr_department',
+            'pk' => 'department_id',
+            'label' => 'แผนก',
+            'references' => [
+                ['hr_employee', 'department_id', 'พนักงาน'],
+                ['hr_employee_movement', 'old_department_id', 'ประวัติ Movement'],
+                ['hr_employee_movement', 'new_department_id', 'ประวัติ Movement'],
+                ['hr_department', 'parent_department_id', 'แผนกย่อย'],
+            ],
+        ],
+        'position' => [
+            'table' => 'hr_position',
+            'pk' => 'position_id',
+            'label' => 'ตำแหน่ง',
+            'references' => [
+                ['hr_employee', 'position_id', 'พนักงาน'],
+                ['hr_employee_movement', 'old_position_id', 'ประวัติ Movement'],
+                ['hr_employee_movement', 'new_position_id', 'ประวัติ Movement'],
+            ],
+        ],
+        'employee_type' => [
+            'table' => 'hr_employee_type',
+            'pk' => 'employee_type_id',
+            'label' => 'ประเภทพนักงาน',
+            'references' => [
+                ['hr_employee', 'employee_type_id', 'พนักงาน'],
+                ['hr_employee_movement', 'old_employee_type_id', 'ประวัติ Movement'],
+                ['hr_employee_movement', 'new_employee_type_id', 'ประวัติ Movement'],
+            ],
+        ],
+    ];
+}
+
+/**
+ * Hard delete เฉพาะ Master Data ที่ไม่มีข้อมูลอ้างอิง
+ * ถ้ามีการอ้างอิงจะไม่ลบ และแนะนำให้ปิดใช้งาน (is_active = false) แทน
+ */
+function deleteMasterRecord(string $type, int $id): void
+{
+    $config = masterDeleteConfig()[$type] ?? null;
+
+    if ($config === null || $id <= 0) {
+        setFlash('error', 'ไม่พบข้อมูลที่ต้องการลบ');
+        return;
+    }
+
+    $usedBy = [];
+    foreach ($config['references'] as [$refTable, $refColumn, $refLabel]) {
+        $stmt = db()->prepare("SELECT COUNT(*) FROM {$refTable} WHERE {$refColumn} = :id");
+        $stmt->execute(['id' => $id]);
+        $count = (int) $stmt->fetchColumn();
+
+        if ($count > 0) {
+            $usedBy[$refLabel] = ($usedBy[$refLabel] ?? 0) + $count;
+        }
+    }
+
+    if ($usedBy) {
+        $parts = [];
+        foreach ($usedBy as $label => $count) {
+            $parts[] = $label . ' ' . $count . ' รายการ';
+        }
+        setFlash(
+            'error',
+            'ไม่สามารถลบ' . $config['label'] . 'นี้ได้ เนื่องจากถูกใช้งานอยู่ (' . implode(', ', $parts) . ') กรุณาเปลี่ยนเป็น "ปิดใช้งาน" แทน'
+        );
+        return;
+    }
+
+    $stmt = db()->prepare("DELETE FROM {$config['table']} WHERE {$config['pk']} = :id");
+    $stmt->execute(['id' => $id]);
+
+    setFlash(
+        $stmt->rowCount() > 0 ? 'success' : 'error',
+        $stmt->rowCount() > 0 ? 'ลบ' . $config['label'] . 'เรียบร้อยแล้ว' : 'ไม่พบข้อมูลที่ต้องการลบ'
+    );
+}
+
+function renderDeleteButton(int $id, string $name): void
+{
+    ?>
+    <form method="post" class="inline-form"
+          onsubmit="return confirm(<?= e(json_encode('ยืนยันการลบ "' . $name . '" ?', JSON_UNESCAPED_UNICODE)) ?>);">
+        <input type="hidden" name="csrf_token" value="<?= e(csrfToken()) ?>">
+        <input type="hidden" name="action" value="delete">
+        <input type="hidden" name="id" value="<?= $id ?>">
+        <button type="submit" class="link-danger"><i class="bi bi-trash"></i> ลบ</button>
+    </form>
+    <?php
+}

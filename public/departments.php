@@ -8,6 +8,14 @@ require_once __DIR__ . '/../includes/functions.php';
 
 requireLogin();
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    checkCsrf();
+    deleteMasterRecord('department', (int) ($_POST['id'] ?? 0));
+
+    header('Location: departments.php' . (($_SERVER['QUERY_STRING'] ?? '') !== '' ? '?' . $_SERVER['QUERY_STRING'] : ''));
+    exit;
+}
+
 $search = trim($_GET['search'] ?? '');
 $statusFilter = $_GET['status'] ?? 'all';
 
@@ -96,6 +104,7 @@ require_once __DIR__ . '/../includes/header.php';
             <td><?= activeBadge((bool) $department['is_active']) ?></td>
             <td>
                 <a href="department_form.php?id=<?= (int) $department['department_id'] ?>"><i class="bi bi-pencil-square"></i> แก้ไข</a>
+                <?php renderDeleteButton((int) $department['department_id'], (string) $department['department_name_th']); ?>
             </td>
         </tr>
         <?php endforeach; ?>

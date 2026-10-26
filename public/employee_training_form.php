@@ -236,6 +236,7 @@ $csrfToken = csrfToken();
 
     <div class="form-actions">
         <a href="employee_training.php<?= $employeeId ? '?employee_id=' . $employeeId : '' ?>" class="btn"><i class="bi bi-x-lg"></i> ยกเลิก</a>
+        <button type="button" class="btn" data-clear-form><i class="bi bi-eraser"></i> ล้าง</button>
         <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> บันทึก</button>
     </div>
 </form>
